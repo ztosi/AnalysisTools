@@ -1,0 +1,254 @@
+#module 0 size: 2 bs: 4.49745e-09
+320 380 
+#module 1 size: 4 bs: 1.93337e-08
+254 347 428 447 
+#module 2 size: 51 bs: 0.0320068
+10 16 32 41 53 67 78 80 88 91 93 97 105 125 135 137 149 160 175 179 186 192 202 240 242 243 246 251 276 329 334 351 396 417 432 441 446 452 462 464 468 473 482 487 490 513 544 556 557 568 600 
+#module 3 size: 67 bs: 0.0422693
+21 35 37 39 48 49 52 60 71 79 82 106 117 123 127 131 132 139 148 154 165 176 180 181 185 193 205 253 255 271 274 281 287 291 298 300 319 342 355 358 368 373 378 388 399 405 418 424 427 431 433 455 465 468 476 478 485 494 506 512 533 534 535 540 541 569 586 
+#module 4 size: 190 bs: 0.0640758
+4 8 11 13 14 22 23 25 26 31 36 40 47 50 59 63 64 65 69 70 73 84 85 92 96 106 118 120 122 128 130 135 136 138 141 143 144 145 146 152 153 157 159 162 167 168 169 170 171 173 174 178 182 188 191 195 196 197 199 201 209 213 218 219 220 225 227 229 230 231 233 234 235 236 241 245 246 250 252 256 258 261 262 264 269 275 279 280 283 284 285 289 294 295 301 306 307 308 311 316 321 322 324 325 327 335 337 339 344 350 352 353 359 361 365 366 369 370 374 375 382 383 387 392 395 401 410 412 413 415 416 417 421 423 425 434 438 442 443 453 454 457 461 466 467 472 475 477 481 483 484 488 496 497 501 503 504 508 515 520 522 523 525 527 530 545 547 548 551 554 560 561 571 573 575 576 577 578 579 580 581 583 584 585 592 593 596 597 598 602 
+#module 5 size: 79 bs: 0.065222
+3 6 9 12 28 34 37 38 42 46 51 55 56 58 66 68 77 90 98 100 101 102 108 109 110 111 116 133 140 161 164 172 210 216 222 226 247 248 259 268 270 273 277 307 326 330 336 343 363 364 389 391 393 402 422 425 437 440 480 489 499 502 503 505 510 526 528 531 532 536 549 559 563 566 574 582 589 591 592 
+#module 6 size: 74 bs: 0.0272539
+45 57 69 74 75 87 89 95 113 114 123 124 150 151 166 175 176 180 181 184 187 198 208 215 217 221 234 263 266 272 278 282 286 287 288 292 297 302 303 305 309 314 332 338 342 367 381 385 398 403 407 411 420 426 430 435 444 448 449 450 451 481 486 495 512 516 532 535 540 543 546 554 562 564 
+#module 7 size: 59 bs: 0.0943816
+2 5 9 15 17 30 33 44 62 81 102 103 107 112 114 115 158 172 190 194 207 208 210 226 228 232 244 247 265 272 278 290 304 310 341 345 349 360 371 394 397 398 408 419 459 478 489 499 502 514 529 533 536 539 542 550 555 558 582 
+#module 8 size: 1 bs: 1
+1 
+#module 9 size: 1 bs: 1
+19 
+#module 10 size: 1 bs: 1
+76 
+#module 11 size: 1 bs: 1
+126 
+#module 12 size: 1 bs: 1
+142 
+#module 13 size: 1 bs: 1
+204 
+#module 14 size: 1 bs: 1
+521 
+#module 15 size: 1 bs: 1
+211 
+#module 16 size: 1 bs: 1
+293 
+#module 17 size: 1 bs: 1
+86 
+#module 18 size: 1 bs: 1
+119 
+#module 19 size: 1 bs: 1
+156 
+#module 20 size: 1 bs: 1
+318 
+#module 21 size: 1 bs: 1
+376 
+#module 22 size: 1 bs: 1
+384 
+#module 23 size: 1 bs: 1
+409 
+#module 24 size: 1 bs: 1
+552 
+#module 25 size: 1 bs: 1
+29 
+#module 26 size: 1 bs: 1
+313 
+#module 27 size: 1 bs: 1
+323 
+#module 28 size: 1 bs: 1
+354 
+#module 29 size: 1 bs: 1
+469 
+#module 30 size: 1 bs: 1
+257 
+#module 31 size: 1 bs: 1
+260 
+#module 32 size: 1 bs: 1
+357 
+#module 33 size: 1 bs: 1
+436 
+#module 34 size: 1 bs: 1
+507 
+#module 35 size: 1 bs: 1
+572 
+#module 36 size: 1 bs: 1
+7 
+#module 37 size: 1 bs: 1
+54 
+#module 38 size: 1 bs: 1
+456 
+#module 39 size: 1 bs: 1
+460 
+#module 40 size: 1 bs: 1
+492 
+#module 41 size: 1 bs: 1
+99 
+#module 42 size: 1 bs: 1
+134 
+#module 43 size: 1 bs: 1
+200 
+#module 44 size: 1 bs: 1
+203 
+#module 45 size: 1 bs: 1
+224 
+#module 46 size: 1 bs: 1
+299 
+#module 47 size: 1 bs: 1
+346 
+#module 48 size: 1 bs: 1
+511 
+#module 49 size: 1 bs: 1
+94 
+#module 50 size: 1 bs: 1
+445 
+#module 51 size: 1 bs: 1
+595 
+#module 52 size: 1 bs: 1
+43 
+#module 53 size: 1 bs: 1
+83 
+#module 54 size: 1 bs: 1
+400 
+#module 55 size: 1 bs: 1
+517 
+#module 56 size: 1 bs: 1
+519 
+#module 57 size: 1 bs: 1
+121 
+#module 58 size: 1 bs: 1
+249 
+#module 59 size: 1 bs: 1
+565 
+#module 60 size: 1 bs: 1
+206 
+#module 61 size: 1 bs: 1
+239 
+#module 62 size: 1 bs: 1
+296 
+#module 63 size: 1 bs: 1
+356 
+#module 64 size: 1 bs: 1
+498 
+#module 65 size: 1 bs: 1
+177 
+#module 66 size: 1 bs: 1
+267 
+#module 67 size: 1 bs: 1
+328 
+#module 68 size: 1 bs: 1
+390 
+#module 69 size: 1 bs: 1
+429 
+#module 70 size: 1 bs: 1
+491 
+#module 71 size: 1 bs: 1
+18 
+#module 72 size: 1 bs: 1
+24 
+#module 73 size: 1 bs: 1
+61 
+#module 74 size: 1 bs: 1
+317 
+#module 75 size: 1 bs: 1
+362 
+#module 76 size: 1 bs: 1
+372 
+#module 77 size: 1 bs: 1
+594 
+#module 78 size: 1 bs: 1
+223 
+#module 79 size: 1 bs: 1
+463 
+#module 80 size: 1 bs: 1
+538 
+#module 81 size: 1 bs: 1
+20 
+#module 82 size: 1 bs: 1
+553 
+#module 83 size: 1 bs: 1
+104 
+#module 84 size: 1 bs: 1
+567 
+#module 85 size: 1 bs: 1
+471 
+#module 86 size: 1 bs: 1
+27 
+#module 87 size: 1 bs: 1
+72 
+#module 88 size: 1 bs: 1
+147 
+#module 89 size: 1 bs: 1
+212 
+#module 90 size: 1 bs: 1
+237 
+#module 91 size: 1 bs: 1
+377 
+#module 92 size: 1 bs: 1
+474 
+#module 93 size: 1 bs: 1
+518 
+#module 94 size: 1 bs: 1
+129 
+#module 95 size: 1 bs: 1
+340 
+#module 96 size: 1 bs: 1
+379 
+#module 97 size: 1 bs: 1
+312 
+#module 98 size: 1 bs: 1
+333 
+#module 99 size: 1 bs: 1
+509 
+#module 100 size: 1 bs: 1
+599 
+#module 101 size: 1 bs: 1
+348 
+#module 102 size: 1 bs: 1
+404 
+#module 103 size: 1 bs: 1
+183 
+#module 104 size: 1 bs: 1
+386 
+#module 105 size: 1 bs: 1
+439 
+#module 106 size: 1 bs: 1
+470 
+#module 107 size: 1 bs: 1
+458 
+#module 108 size: 1 bs: 1
+524 
+#module 109 size: 1 bs: 1
+500 
+#module 110 size: 1 bs: 1
+570 
+#module 111 size: 1 bs: 1
+493 
+#module 112 size: 1 bs: 1
+479 
+#module 113 size: 1 bs: 1
+601 
+#module 114 size: 1 bs: 1
+537 
+#module 115 size: 1 bs: 1
+189 
+#module 116 size: 1 bs: 1
+238 
+#module 117 size: 1 bs: 1
+414 
+#module 118 size: 1 bs: 1
+163 
+#module 119 size: 1 bs: 1
+590 
+#module 120 size: 1 bs: 1
+406 
+#module 121 size: 1 bs: 1
+155 
+#module 122 size: 1 bs: 1
+588 
+#module 123 size: 1 bs: 1
+587 
+#module 124 size: 1 bs: 1
+214 
+#module 125 size: 1 bs: 1
+315 
+#module 126 size: 1 bs: 1
+331 
