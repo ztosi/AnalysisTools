@@ -8,11 +8,14 @@ global data;
     else
         dat = (dat.^lamb - 1) ./ lamb;      
     end
-%     dat = (dat-mean(dat)) ./ std(dat);
-    mn = mean(dat);
-    st = std(dat);
-    nlogL = normlike([mn st], dat);
-
-
+    dat = (dat-mean(dat)) ./ std(dat);
+%     mn = mean(dat);
+%     st = std(dat);
+    nlogL = normlike([0, 1], dat);
+% 
+%     if nlogL < 0
+%         disp('wtf');
+%     end
+%     
 end
 

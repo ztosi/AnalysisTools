@@ -73,14 +73,15 @@
 
 function [ str_avas, szes, lens, rast ] = findAvas( asdf, ts, varargin)
 %tic;
-narginchk(2, 8);
+narginchk(2, 12);
 
 % Defaults...
 offset = 0;
 % range needs size of rast first...
 customThresh = false;
 defaultRange = true;
-
+bu = ts;
+metaFlag = 1;
 % assign values if specified
 for i=1:2:length(varargin)
     switch varargin{i}
@@ -93,6 +94,10 @@ for i=1:2:length(varargin)
         case 'threshold'
             thresh = varargin{i+1};
             customThresh = true;
+        case 'BinUnit'
+            bu = varargin{i+1};
+        case 'MetaData'
+            metaFlag = varargin{i+1};
         otherwise
             error('Unknown input.');
     end
@@ -102,7 +107,11 @@ end
 % each column represents a time bin since str_avas requires us to take sub
 % matrices of the raster from one time index to another. See CSC sparse
 % data format for why this is the case...
-rast=ASDFToRaster(asdf, ts, 'row');
+if metaFlag
+    rast=ASDFToRaster(asdf, 'BinSize', ts, 'BinUnit', bu, 'row');
+else
+    rast=ASDFToRaster(asdf, 'BinSize', ts, 'BinUnit', bu, 'row', '-nometa');
+end
 if defaultRange
     range = size(rast,2);
 end

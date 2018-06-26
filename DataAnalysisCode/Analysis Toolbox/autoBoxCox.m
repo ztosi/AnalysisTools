@@ -20,7 +20,7 @@ else
         dat = ((dat).^lambdas(1) - 1)/lambdas(1);
     end
 end
-%transform = (dat-mean(dat))./std(dat);
+transform = (dat-mean(dat))./std(dat);
 lambda = lambdas;
 
 

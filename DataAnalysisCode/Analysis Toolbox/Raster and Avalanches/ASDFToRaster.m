@@ -63,15 +63,7 @@
 
 function [raster, binunit] = ASDFToRaster(asdf, varargin)
 %tic;
-narginchk(1, 3);
-if ~isempty(asdf{end})
-    info = asdf{end};
-    n_neu = info(1);
-    binunit = asdf{end - 1};
-else 
-    n_neu = length(asdf)-2;
-    binunit = 0.25;
-end
+narginchk(1, 7);
 if isrow(asdf)
     asdf = asdf';
 end
@@ -80,43 +72,69 @@ end
 asdf = cellfun(@(x) reshape(x, length(x), 1), ...
     asdf, 'UniformOutput', false);
 colMajor = true;
+noMetaFlag = 0;
+binsize=1;
+binunit=-1;
+skipFlag = 0;
 if isempty(varargin)
-    binsize = binunit;
 else
     for ii=1:length(varargin)
-        if isnumeric(varargin{ii})
-            binsize = varargin{ii};
-            if binsize < binunit
-                error('Cannot have custom bin size less than asdf time bin.');
-            end
-        else
-            if strcmp(varargin{ii}, 'row') || ...
-                    strcmp(varargin{ii}, 'row major')
+        if skipFlag
+            skipFlag = 0;
+            continue;
+        end
+        switch(varargin{ii})
+            case 'BinSize'
+                binsize = varargin{ii+1};
+                skipFlag = 1;
+            case 'BinUnit'
+                binunit = varargin{ii+1};
+                skipFlag = 1;
+            case 'row'
                 colMajor = false;
-            elseif strcmp(varargin{ii}, 'column') || ...
-                    strcmp(varargin{ii}, 'col')  || ...
-                    strcmp(varargin{ii}, 'column major')
+            case 'col'
                 colMajor = true;
-            else
+            case '-nometa'
+                noMetaFlag = 1;
+            otherwise
+                
                 error('Unknown input');
-            end
+                
         end
     end
 end
-nemp = find(cellfun(@isempty, asdf(1:end-2)));
-nemp = [setdiff(1:n_neu, nemp) n_neu+1 n_neu+2];
-asdf = asdf(nemp);
-n_neu = length(nemp)-2;
-
-minVal = min(cellfun(@min, asdf(1:end-2)));
-
-% very simple check of validity of ASDF
-if n_neu ~= length(asdf) - 2
-    error('Invalid n_neu information is contained in this ASDF');
+if ~noMetaFlag
+    info = asdf{end};
+    n_neu = info(1);
+    if binunit == -1
+        binunit = asdf{end - 1};
+    end
+else
+    n_neu = length(asdf);
+    if binunit == -1
+        binunit = binsize;
+    end
+end
+if binsize < binunit
+    error('Cannot have custom bin size less than asdf time bin.');
+end
+nemp = find(cellfun(@isempty, asdf(1:n_neu)));
+if ~noMetaFlag
+    nemp = [setdiff(1:n_neu, nemp) n_neu+1 n_neu+2];
+    asdf = asdf(nemp);
+    n_neu = length(nemp)-2;
+else
+    nemp = setdiff(1:n_neu, nemp);
+    asdf = asdf(nemp);
+    n_neu = length(nemp);
 end
 
-% Get rid of unnecessary metadata
-asdf = asdf(1:(length(asdf)-2));
+minVal = min(cellfun(@min, asdf(1:n_neu)));
+
+if ~noMetaFlag
+    % Get rid of unnecessary metadata
+    asdf = asdf(1:(length(asdf)-2));
+end
 
 % Convert the spike times to bin indices based on the time unit for each bin
 % and the specified size of each bin in the resulting raster
