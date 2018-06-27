@@ -9,7 +9,7 @@ function [p] = unityline(ax, varargin)
     if isempty(varargin)
        p = plot([minV(1) maxV(2)], [minV(1) maxV(2)], 'k--'); 
     else
-        qo = [minV(1) maxV(2)];
+       qo = [minV(1) maxV(2)];
        p = plot([minV(1) maxV(2)], [minV(1) maxV(2)], varargin); 
     end
 

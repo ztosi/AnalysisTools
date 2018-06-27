@@ -1,4 +1,4 @@
-function [svid] = detectActiveCons(str_ava, adj_mat, delays, lenRange, maxFrames, ts, tau)
+function [svid] = detectActiveCons(str_ava, adj_mat, delays, lenRange, maxFrames, ts, tau, kappa)
 
 lens = cellfun(@(x) size(x,2), str_ava);
 [~, lenOrd] = sort(lens, 'descend');
@@ -37,9 +37,6 @@ kernelFun = exp(-(0:ts:ceil(4*(tau/ts))));
 for kk=1:length(str_ava)
     ava = str_ava{kk};
     alen = size(ava,2);
-    if alen > maxFrames
-        alen = maxFrames;
-    end
     [mems,~, ~] = find(ava);
     mems = unique(mems);
     nUnq = length(mems);
@@ -51,11 +48,10 @@ for kk=1:length(str_ava)
         if isempty(locOuts)
             continue;
         end
-        %   size(full(ava(mems(ii),:)))
-        %      aCon = conv( full(ava(mems(ii),1:alen)), alphaFun, 'full');
-        %      alphaConvs(1:alen,ii) = aCon((ceil(tau)):(alen+ceil(tau)-1));
-        aCon = conv( full(ava(mems(ii),1:alen)), kernelFun, 'full');
-        alphaConvs(1:alen,ii) = aCon(1:alen);
+     %   size(full(ava(mems(ii),:)))
+        aCon = conv( full(ava(mems(ii),1:alen)), alphaFun, 'full');
+        alphaConvs(1:alen,ii) = aCon((ceil(tau)):(alen+ceil(tau)-1));
+        
         for jj=1:length(locOuts)
             outT = find(ava(mems(locOuts(jj)),1:alen));
             outT = outT - localSd(ii, locOuts(jj));
@@ -63,11 +59,6 @@ for kk=1:length(str_ava)
             outT = outT(outT>0);
             index = lookup(mems(ii), mems(locOuts(jj)));
             svid(outT, index) = svid(outT, index) + alphaConvs(outT, ii);
-%             try
-%                 svid(outT, index) = svid(outT, index) + alphaConvs(outT, ii);
-%             catch ME
-%                 disp('poop');
-%             end
         end
         
     end
