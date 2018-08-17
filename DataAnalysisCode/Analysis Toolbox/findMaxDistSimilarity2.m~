@@ -1,9 +1,7 @@
  function [ js_diverge, mse ] = findMaxDistSimilarity2( dat1, dat2, varargin )
 % Finds the (maximal) similarity bwetween the probability distributions 
-% represented by two sets of data. Transforms the data first based on a
-% selected transform. User can specify the range of the data beforehand,
-% which is useful if multiple comparisons are being made between datasets
-% within some larger dataset with a specific range.
+% represented by two sets of data.
+%
 
 if isrow(dat1)
     dat1=dat1';
