@@ -9,7 +9,7 @@ function [ inVers, outVers, vers ] = versatility( wtMat, vArg )
     for i = 1:m
        inVers(i) = std(vArg(i) - vArg(adj(:, i)));
        outVers(i) = std(vArg(i) - vArg(adj(i, :)));
-       vers(i) = std(vArg(i) - [vArg(adj(i, :)), vArg(adj(:, i))]);
+       vers(i) = std(vArg(i) - [vArg(adj(i, :)); vArg(adj(:, i))]);
     end
 
 end
