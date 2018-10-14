@@ -82,6 +82,7 @@ customThresh = false;
 defaultRange = true;
 bu = ts;
 metaFlag = 1;
+td = ts;
 % assign values if specified
 for i=1:2:length(varargin)
     switch varargin{i}
@@ -98,6 +99,8 @@ for i=1:2:length(varargin)
             bu = varargin{i+1};
         case 'MetaData'
             metaFlag = varargin{i+1};
+        case 'time difference'
+
         otherwise
             error('Unknown input.');
     end
@@ -136,6 +139,19 @@ act_change = diff([0 evts 0]);
 starts = find(act_change == 1);
 % -1s indicate an avalanche ended in the previous time bin
 ends = find(act_change== -1) - 1;
+
+if (td ~= ts) 
+    ed2 = ends(1:end-1);
+    st2 = starts(2:end);
+
+    q = st2-ed2;
+
+    inds = 1:length(st2);
+    inds = inds(q<=td);
+
+    starts = starts(inds+1);
+    ends = ends(inds);
+end
 
 % durations...
 lens = ends-starts;
