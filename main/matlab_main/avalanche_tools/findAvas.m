@@ -100,7 +100,7 @@ for i=1:2:length(varargin)
         case 'MetaData'
             metaFlag = varargin{i+1};
         case 'time difference'
-
+            td = varargin{i+1};
         otherwise
             error('Unknown input.');
     end
@@ -149,12 +149,12 @@ if (td ~= ts)
     inds = 1:length(st2);
     inds = inds(q<=td);
 
-    starts = starts(inds+1);
-    ends = ends(inds);
+    starts = starts([1 inds+1]);
+    ends = ends([inds length(ends)]);
 end
 
 % durations...
-lens = ends-starts;
+lens = ends-starts+1;
 str_avas = cell(length(lens), 1);
 szes = zeros(size(lens));
 

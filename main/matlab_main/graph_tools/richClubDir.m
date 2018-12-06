@@ -88,7 +88,7 @@
 %   
 %
 %%
-% AUTHORS: Zach Tosi
+% AUTHORS: Zoe Tosi
 % EMAIL: ztosi@indiana.edu
 % March 2016
 % Febuary 2017

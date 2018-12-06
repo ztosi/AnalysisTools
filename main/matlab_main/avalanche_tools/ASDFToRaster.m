@@ -61,7 +61,7 @@
 % POSSIBILITY OF SUCH DAMAGE.
 %==============================================================================
 
-function [raster, binunit] = ASDFToRaster(asdf, varargin)
+function [raster, nemp, binunit] = ASDFToRaster(asdf, varargin)
 %tic;
 narginchk(1, 7);
 if isrow(asdf)

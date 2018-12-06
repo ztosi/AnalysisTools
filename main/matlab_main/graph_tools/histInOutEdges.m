@@ -180,7 +180,7 @@ for i = 1:5:5*n
     ds = fitdist(nonzeros(wtMat(:,currInd)), 'kernel', 'Kernel', 'epanechnikov', 'width', mx/25);
     cnts = pdf(ds, mn:(mx-mn)/1000:mx);
     cnts = cnts ./ sum(cnts);
-    mns(currInd) = median(nonzeros(wtMat(:,currInd)));
+    mns(currInd) = mean(nonzeros(wtMat(:,currInd)));
     % locPdf = cnts ./ (sum(cnts));
     %     kl = locPdf .*  log2(locPdf./(netPdf));
     %     entropy = -netPdf .* log2(netPdf);
@@ -250,9 +250,9 @@ scatter3(mns(indsNN), 1:n, ones(1,n).*zmax, 15, repmat([0 .8 .4], n, 1), 'filled
 plot3([useVec(indsNN), useVec(indsNN)]', [(1:n); (1:n)], [ones(1,n).*zmax; zeros(1,n)], '-', 'Color', [0 .4 .8 0.5]);
 plot3([mns(indsNN), mns(indsNN)]', [(1:n); (1:n)], [ones(1,n).*zmax; zeros(1,n)], '-', 'Color', [0 .8 .4 0.5]);
 [rho, pv] = corr(mns(indsNN), [1:n]', 'type', 'Spearman');
-pfit = polyfit(mns(indsNN), [1:n]', 1);
-plot3([mn, mx], pfit(1)*[mn, mx] + pfit(2), 1.1 * [zmax zmax], '-', 'Color', [0 0 0], 'LineWidth', 3, 'LineSmoothing', 'on');
-title({['Spearman \rho = ' num2str(rho)], [' p < ' num2str(pv)]});
+%pfit = polyfit([1:n]', mns(indsNN), 1);
+%plot3(pfit(1)*[mn, mx] + pfit(2), [mn, mx], 1.1 * [zmax zmax], '-', 'Color', [0 0 0], 'LineWidth', 3, 'LineSmoothing', 'on');
+%title({['Spearman \rho = ' num2str(rho)], [' p < ' num2str(pv)]});
 view([-18 80]);
 %     a_handle = gca;
 %     a_handle.XScale = 'log';

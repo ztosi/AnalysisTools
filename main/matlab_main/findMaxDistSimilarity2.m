@@ -16,7 +16,7 @@ topSpec = 0;
 shift = 0;
 mnmxFlag = 0;
 toRemove = [];
-range = [0 0];
+range = [min([dat1; dat2]) max([dat1; dat2])];
 rangeSpec = 0;
 for ii=1:2:length(varargin)
     
@@ -28,30 +28,30 @@ for ii=1:2:length(varargin)
                 case 'none'
                     % Do nothing
                     case 'zscore'
-    %                     sd1 = std(dat1);
-    %                     sd2 = std(dat2);  
+                        sd1 = std(dat1);
+                        sd2 = std(dat2);  
                     if rangeSpec
                         warning(['zscore transforms the two disstributions' ...
                         'according to their individual parameters. No such transform will be' ...
                         'applied to the range if the range argument.' ]);
                     end
-                    dat1 = (dat1 - mean(dat1));%./(sd1);
-                    dat2 = (dat2 - mean(dat2));%./(sd2);
-                    range = range - max([mean(dat1), mean(dat2)]);
-%                     dat1 = (dat1 - mean(dat1))./(sd1 *sd2);
-%                     dat2 = (dat2 - mean(dat2))./(sd1 *sd2);
-%                     range = range./(sd1*sd2);
+%                     dat1 = (dat1 - mean(dat1));%./(sd1);
+%                     dat2 = (dat2 - mean(dat2));%./(sd2);
+%                     range = range - max([mean(dat1), mean(dat2)]);
+                    dat1 = (dat1 - mean(dat1))./(sd1);
+                    dat2 = (dat2 - mean(dat2))./(sd2);
+                    range = [min([dat1; dat2]) max([dat1; dat2])];
                 case 'log'
-                    dat1 = log(dat1);
-                    dat2 = log(dat2);
+                    dat1 = log(nonzeros(dat1));
+                    dat2 = log(nonzeros(dat2));
                     range = log(range);
                 case 'log2'
-                    dat1 = log2(dat1);
-                    dat2 = log2(dat2);
+                    dat1 = log2(nonzeros(dat1));
+                    dat2 = log2(nonzeros(dat2));
                     range = log2(range);
                 case 'log10'
-                    dat1 = log10(dat1);
-                    dat2 = log10(dat2);
+                    dat1 = log10(nonzeros(dat1));
+                    dat2 = log10(nonzeros(dat2));
                     range = log10(range);
                 case 'min-max'
                     mnmxFlag = 1;
@@ -116,7 +116,7 @@ end
 %     
 %     end
 
-step = (mxmx-mimi)/2000;
+step = (mxmx-mimi)/1000;
 x_vals = mimi:step:mxmx;
 
 pdf1p = pdf(pd1, x_vals);
