@@ -1,4 +1,4 @@
-function [dlys, ent, tent, mi] = guessDelays(edges,  asdf,  ranges, varargin)
+function [eds, dlyData] = guessDelays(wtMat,  asdf,  ranges, varargin)
 
 	narginchk(3,11);
 
@@ -22,11 +22,17 @@ function [dlys, ent, tent, mi] = guessDelays(edges,  asdf,  ranges, varargin)
 		end
 	end
 
-	dlys = zeros(size(edges));
-	ent = zeros(size(edges,1),1);
-	tent = zeros(size(edges,1),1);
-	mi = zeros(size(edges,1),1);
-
+	fun = @mean;
+	switch method
+		case 'mean'
+			fun = @mean;
+		case 'median'
+			fun = @median;
+		case 'mode'
+			fun = @mode;
+		otherwise
+			error('Unrecognized method');
+	end
 
 	if metaFlag
 		rast = ASDFToRaster(asdf, 'BinUnit', binUnit, 'col');
@@ -34,85 +40,63 @@ function [dlys, ent, tent, mi] = guessDelays(edges,  asdf,  ranges, varargin)
 		rast = ASDFToRaster(asdf, 'BinUnit', binUnit, 'col', '-nometa');
 	end
 
+	numDlys = (ranges(2)-ranges(1))./binUnit;
+	numDlys = ceil(numDlys);
+	ranges = ceil(ranges./binUnit) .* binUnit;
+	initDly = ranges(1)/binUnit;
 
-	% Ensure things are sorted by target
-	[~, tOrd] = sort(edges(:,2));
-	edges = edges(tOrd,:);
-	if ~isempty(ranges)
-		ranges = ranges(:, tOrd);
-	end
-	targs = unique(edges(:,2));
+	inpData = cell(size(wtMat,2),1);
+	indData = cell(size(wtMat,2),1);
 
-	%TODO: Add reliability
-	edgeNo = 1;
-	for jj = 1:length(targs)
-		tind = targs(jj);
-		srcs = sort(edges(edges(:,2) == tind, 1));
-		tSpks = find(rast(:, tind));
+	for ii=1:size(wtMat,2)
+		disp(ii);
+		tSpks = find(rast(:, ii));
+		tSpks = tSpks(tSpks>ranges(2));
+		inpSet = wtMat(:,ii)~=0;
+		inpRast = ASDFToRaster(asdf(inpSet), 'BinUnit', binUnit, 'row', '-nometa');
+		dlyVals = zeros(inpSet, numDlys);
 
-		targEnt = log(diff(asdf{tind}));
-		mn = min(targEnt);
-		mx = max(targEnt);
-		targEnt = fitdist(targEnt, 'kernel');
-		targEnt = pdf(mn:(mx-mn)/2000:mx, targEnt);
-		targEnt = targEnt ./ sum(targEnt);
-		targEnt = -sum(targEnt .* log2(targEnt));
+		targIsis = diff(tSpks) .* binUnit;
+		mn = min(targIsis);
+		mx = max(targIsis);
+		targPd = fitdist(targIsis, 'kernel');
+		band = targPd.Bandwidth;
+		targPdf = pdf(targPd, (mn-band):(mx-mn + 2 * band)/1000:(mx+band));
+		targPdf = targPdf ./ sum(targPdf);
+		targEnt = -sum(targPdf.*log2(targPdf));
 
-		if ~isempty(ranges)
-			locRanges = ceil(ranges(edges(:,2) == tind)./binUnit).*binUnit;
-
-			for ii = 1:length(srcs)
-				sSpks = find(rast(:, srcs(ii)));
-				timeData = zeros(size(sSpks),1);
-				timeDataInd = 1;
-				whoswho = zeros(length(tSpks)+length(sSpks),1);
-				whoswho(1:length(sSpks)) = 1;
-				[~,ord] = sort([sSpks; tSpks], 'ascend');
-				whoswho = whoswho(ord);
-
-				n2check = (locRanges(2) - locRanges(1))/binUnit + 1;
-				kernel = zeros(n2check + locRanges(1)/binUnit,1);
-				data = [];
-				%timeBins = zeros(n2check,1);
-				for kk=1:n2check
-					kernel(kk + locRanges(1)/binUnit) = 1; % Advance the point we want to check
-					tmp = conv(whoswho, kernel, 'full'); % will be "1" if a source was offset from a target by kk+locRanges(1)/binUnit 
-					data  = [data; nonzeros(tmp(1:length(whoswho)) .* (whoswho == 0)) .* ((kk-1)/binUnit + locRanges(1))];
-					kernel(kk + locRanges(1)/binUnit) = 0; % cover up the old one
-				end
-
-
-
-				switch method
-					case 'mean'
-						dly(edgeNo) = mean(data); 
-					case 'median'
-						dly(edgeNo) = median(data);
-					case 'mode'
-						dly(edgeNo) = mode(data);
-
-					otherwise
-						error('Unrecognized method');
-
-				end
-				timeDist = fitdist(log(data), 'kernel');
-
-				td = pdf(log(locRanges(1)):(log(locRanges(2) - locRanges(1))/2000):log(locRanges(2)), timeDist);
-
-				td = td ./ sum(td);
-
-				ent(edgeNo) = -sum(td .* log2(td));
-				tent(edgeNo) = targEnt;
-
-				mi = targEnt - ent(edgeNo);
-
-				edgeNo = edgeNo + 1;
-
-			end
-
-			
+		for kk=1:numDlys
+			shift  = initDly + kk - 1;
+			counts = sum(inpRast(:, tSpks-shift),2);
+			dlyVals(:, kk) = counts;
 		end
 
+		allDat = zeros(length(inpSet),4);
+
+		for jj=1:length(inpSet)
+			data = zeros(sum(dlyVals(jj,:)), 1);
+			cVal = 1;
+			for kk=1:numDlys
+				data(cVal:(cVal + dlyVals(jj,kk)-1)) = (kk+initDly-1) * binUnit;
+			end
+
+			pd = fitdist(data, 'kernel');
+			dst = pdf(pd, 0:1.5*ranges(2)/1500:(1.5 * ranges(2)));
+			dst = dst ./ sum(dst);
+
+			allDat(jj,1) = fun(data);
+			allDat(jj,2) = -sum(dst.*log2(dst));
+			allDat(jj,3) = targEnt;
+		end
+
+		allDat(:,4) = allDat(:,2) - allDat(:,3);
+
+		inpData{ii} = allDat;
+		indData{ii} = [find(inpSet), ones(nnz(inpSet), 1) .* ii]; 
+
 	end
 
+	eds = cell2mat(indData);
+	dlyData = cell2mat(inpData);
+	
 end
