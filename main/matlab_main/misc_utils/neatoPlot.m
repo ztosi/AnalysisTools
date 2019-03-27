@@ -1,14 +1,14 @@
 f=figure
-set(f, 'Position', [100, 100, 700, 700]);
+set(f, 'Position', [100, 100, 1400, 700]);
 set(f, 'color', [0 0 0]);
 f.PaperUnits = 'centimeters';
 f.PaperPosition = [0 0 70 70];
-vid = VideoWriter('~/Desktop/Spikes', 'Uncompressed AVI');
+vid = VideoWriter('~/Desktop/Spikes_A', 'Motion JPEG AVI');
 open(vid);
 f.InvertHardcopy = 'off';
 rastE=rastFV;
 %rastI=rast(~ei,:);
-positions = [isiMap11, log2(mean(cliqueDirAll+1))'];
+positions = [x', y', zeros(length(y),1)];%isiMap11, log2(mean(cliqueDirAll+1))'];
 posE= positions;%isiMaps{11}%positions(ei,:);
 %posI=positions(~ei,:);
 set(gcf, 'Renderer', 'painters');
@@ -37,24 +37,24 @@ ax.GridColor = [0.6 0.6 0.6];
 %isa(ax,'matlab.graphics.axis.Axes')
 
 ax.Color = [0 0 0];
-xmin = -15;
-xmax = 15;
-ymin = -10;
-ymax = 10;
+xmin = -1000;
+xmax = 1000;
+ymin = -650;
+ymax = 600;
 zmin = 0;%-0.01;
-zmax = 25;%1.01;
+zmax = 0;%1.01;
 % xlim(ax,[0 2200]);
 % ylim(ax, [0 2200]);
 % zlim(ax, [0 6100]);
 xlim(ax,[xmin xmax]);
 ylim(ax, [ymin ymax]);
-zlim(ax, [zmin zmax]);
+%zlim(ax, [zmin zmax]);
 
 
-adj = wtMatSynO ~= 0;
+adj = wtMat ~= 0;
 sigDotP = zeros(size(wtMat));
-for i = 1:1000 %4900
-    view(ax, [(i-100)/10 + 100, 20]);
+for i = 2000:6000 %4900
+    %view(ax, [(i-100)/10 + 100, 20]);
     hold(ax, 'on');
     %ax=ax;
     %ax.XLimMode = 'manual';
@@ -62,13 +62,13 @@ for i = 1:1000 %4900
     %ax.ZLimMode = 'manual';
     caxis([-1.2 1.2]);
     %colormap(teal2Yel);
-    lite = bsxfun(@times, double(wtMat~=0), double(rast(:,i)>0.2));
-    scatter3(ax,positions(rast(:,i)<=0.05, 1), positions(rast(:,i)<=0.05, 2),...
-        positions(rast(:,i)<=0.05, 3), 40, zeros(1, sum(rast(:,i)<=0.05)), 'filled');
+    lite = bsxfun(@times, double(wtMat~=0), double(rastFV(:,i)>0.2));
+    scatter3(ax,positions(rastFV(:,i)<=0.05, 1), positions(rastFV(:,i)<=0.05, 2),...
+        positions(rastFV(:,i)<=0.05, 3), 40, zeros(1, sum(rastFV(:,i)<=0.05)), 'filled');
     %%lite = lite ./max(max(lite));
     %lite=lite>0.1;
     %     [src, tar, val] = find((lite .* (wtMat*100)));
-    firingNow = find(rast(:,i) > 0.2);
+    firingNow = find(rastFV(:,i) > 0.2);
     for j=1:length(firingNow)
         %         if val(j)>-4 && val(j)<4
         %             continue;
@@ -89,9 +89,9 @@ for i = 1:1000 %4900
         outs = find(adj(:, firingNow(j)));
         inp = firingNow(j);
         for kk = 1:length(outs)
-            alph = rast(outs(kk), i + round(10*Delays(inp, outs(kk))));
-            alpha = alph * rast(inp,i);
-            alph = alph^3;
+            alph = rastFV(outs(kk), i + round(Delays(inp, outs(kk))));
+            alpha = alph * rastFV(inp,i);
+           % alph = alph^3;
             if alph > 1
                 alph = 1;
             end
@@ -100,19 +100,19 @@ for i = 1:1000 %4900
                 xyzTar = [positions(outs(kk),1); positions(outs(kk),2);positions(outs(kk),3)];
                 xyzPt = sigDotP(inp, outs(kk)) .* (xyzTar-xyzSrc) + xyzSrc;
                 
-                sigDotP(inp, outs(kk)) =  sigDotP(inp, outs(kk)) + 1/(10*Delays(inp, outs(kk)));
+                sigDotP(inp, outs(kk)) =  sigDotP(inp, outs(kk)) + 1/(20*(1+Delays(inp, outs(kk))));
                 if  sigDotP(inp, outs(kk))> 1
                      sigDotP(inp, outs(kk)) = 0;  
                 end
 
                 patchline([xyzSrc(1), xyzTar(1)], ...
                     [xyzSrc(2), xyzTar(2)], ...
-                    [xyzSrc(3), xyzTar(3)],...
+                    [xyzSrc(3), xyzTar(3)]-0.1,...
                     'edgecolor', clur, 'LineWidth', ...
-                    abs(val(j)), 'edgealpha', alph, 'Parent', ax);
-                
-                scatter3(xyzPt(1), xyzPt(2), xyzPt(3), 20, 'm', 'filled', 'MarkerFaceAlpha', alph);
-                
+                    abs(val(j))*20, 'edgealpha', alph, 'Parent', ax);
+                if alph > 0.2
+                    scatter3(xyzPt(1), xyzPt(2), xyzPt(3)-0.1, 30, 'm', 'filled', 'MarkerFaceAlpha', alph);
+                end
             end
             
         end
@@ -137,15 +137,16 @@ for i = 1:1000 %4900
     
     scatter3(ax,positions(rast(:,i)<=0.05, 1), positions(rast(:,i)<=0.05, 2),...
         positions(rast(:,i)<=0.05, 3), 45, 'k', 'LineWidth', 1);
-    
+    clrs = (rastE(rastE(:,i)>0.05, i));
+    clrs(clrs>1) = 1;
     scatter3(ax, posE(rastE(:,i)>0.05, 1), posE(rastE(:,i)>0.05, 2), ...
-        posE(rastE(:,i)>0.05, 3), 40 + ((rastE(rastE(:,i)>0.05, i).^2).*200),...
-        sqrt((rastE(rastE(:,i)>0.05, i).^2)), 'filled');
+        posE(rastE(:,i)>0.05, 3), 40 + ((rastE(rastE(:,i)>0.05, i).^2).*300),...
+        clrs, 'filled');
     % scatter3(ax, posI(rastI(:,i)>0.05, 1), posI(rastI(:,i)>0.05, 2), ...
     %     posI(rastI(:,i)>0.05, 3), 40 + ((rastI(rastI(:,i)>0.05, i).^2).*200),...
     %     -sqrt((rastI(rastI(:,i)>0.05, i).^2)), 'filled');
     scatter3(ax,posE(rastE(:,i)>0.05, 1), posE(rastE(:,i)>0.05, 2),...
-        posE(rastE(:,i)>0.05, 3), 40 + ((rastE(rastE(:,i)>0.05, i).^2).*200), ...
+        posE(rastE(:,i)>0.05, 3), 40 + ((rastE(rastE(:,i)>0.05, i).^2).*300), ...
         'm', 'LineWidth', 1);
     % scatter3(ax,posI(rastI(:,i)>0.05, 1), posI(rastI(:,i)>0.05, 2),...
     %     posI(rastI(:,i)>0.05, 3), 40 + ((rastI(rastI(:,i)>0.05, i).^2).*200), ...
