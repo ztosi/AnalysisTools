@@ -1,10 +1,18 @@
 clear;
 global N N_i N_e q_e q_i tau_e tau_i rp_i rp_e v_l r_m i_bg v_r dt alpha beta lowFR noiseVar;
+f=figure
+set(f, 'Position', [100, 100, 1400, 500]);
+%set(f, 'color', [0 0 0]);
+f.PaperUnits = 'centimeters';
+f.PaperPosition = [0 0 70 70];
+vid = VideoWriter('~/SmoothMANAVid.avi', 'Motion JPEG AVI');
+open(vid);
+f.InvertHardcopy = 'off';
 
 %% Main Sim constants
-N = 1000;
-N_i = 200;
-N_e = 800;
+N = 500;
+N_i = 100;
+N_e = 400;
 dt = 0.5; %ms - integration time step (euler)
 time_f = 5E5; %ms -- simulation duration
 onsetTime = 20000;
@@ -35,31 +43,30 @@ spks = zeros(N,1);
 %% MHP and HP stuff
 ra_tau = 0.001 * dt;
 prefFRs = zeros(N,1);
-lambda = 1E-4;
-eta = 0.01;
-eta_f = 1E-8;
+lambda = 5E-5;
+eta = 0.0001;
+eta_f = 0.0001;
 eta_decay = 1E-5;
 alpha = 2.5;
 lowFR = 1.5; %Hz
 beta = 30;
 
 %% Weight Matrices & input
-wtMn = 1.5;
-wtStd = 1.5;
+wtMn = 1;
+wtStd = 1;
 adj_mat = (rand(N) < 0.1);
-wtMat =  adj_mat .* abs((randn(N).*wtStd+wtMn));
+wtMat =  0.1 .* adj_mat .* abs((randn(N).*wtStd+wtMn));
 %dlyMat = adj_mat.* 
 wtE = sparse(wtMat(:, 1:N_e));
 wtI = sparse(wtMat(:, N_e+1:end));
 adj_mat = adj_mat';
 inD = sum(adj_mat)';
 noInp = 100;
-inpMat = sparse((rand(N, noInp) < 0.2) .* (abs(randn(N, noInp).*wtStd+wtMn)));
+inpMat = 2.*sparse((rand(N, noInp) < 0.2) .* (abs(randn(N, noInp).*wtStd+wtMn)));
 inpMnFR = 10;
 ef= zeros(N,1);
 estFR = ones(N,1).*0.001;
-pfRecord = zeros(1000, 10000);
-
+pfRecord = zeros(N, 10000);
 %% Run 
 for time = 0:dt:time_f
     
@@ -82,10 +89,17 @@ for time = 0:dt:time_f
     
     % LIF Neuron volts
     [v_m, lastSpk, spks] = LIF(v_m, th, lastSpk, i_e, -i_i, ref, time);
-    ef = ef + spks;
-    tauA = 10000./sqrt(estFR);
-    ef = ef - dt .* ef./tauA;
-    estFR = estFR + dt .* (ef./tauA - estFR);
+%     if (time > onsetTime)
+        ef = ef + spks;
+        tauA = 10000./sqrt(estFR.*1000);
+        ef = ef - dt .* ef./tauA;
+        estFR = estFR + dt .* (ef./tauA - estFR);
+%     else
+%         rec = rec + spks;
+%         estFR = rec./time;
+%         ef = estFR;
+%     end
+
     
     % Cache spikes
     spks_tmp(:, spkInd) = spks;
@@ -99,21 +113,51 @@ for time = 0:dt:time_f
     end
     
     if (time > onsetTime)
-        prefFRs = metaHP(adj_mat, inD, prefFRs, 1000* estFR, eta, 0.001);
+        if mod(time,100) == 0
+            subplot(122);
+            cla;
+            hold on;
+            title('Target Firing Rate Distribution');
+            plot(-3:0.01:5, pdf(orig, -3:0.01:5), 'k', 'LineWidth', 2);
+            kd = fitdist(log(prefFRs), 'Normal');
+            plot(-3:0.01:5, pdf(kd, -3:0.01:5), 'LineWidth', 2);
+           
+            kd = fitdist(log(prefFRs), 'Kernel');
+            plot(-3:0.01:5, pdf(kd, -3:0.01:5), 'LineWidth', 2);
+            kd = fitdist(log(1000*estFR), 'Kernel');
+            plot(-3:0.01:5, pdf(kd, -3:0.01:5), 'Color', [.05 .55 .17], 'LineWidth', 2);
+            %overlayedHistogram(orig, log(prefFRs), log(estFR*1000), 'Normalization', 'pdf');
+            legend( 'Original EFRs', 'Target FRs', 'Estimated FRs');
+            xlim([-3 5]);
+            ylim([0 .6]);
+            xlabel('Ln(firing rates)');
+            hold off;
+        end
+        prefFRs = metaHP(adj_mat, inD, prefFRs, 1000* estFR, eta, time);
+        if mod(time,100) == 0
+            writeVideo(vid,getframe(gcf));
+            cla;
+        end
+ 
+        
         if (uint32(mod(time, 10))==0)
             
             pfRecord(:, uint32((time-onsetTime)/10)+1) = prefFRs;
             
         end
         prefFRs(prefFRs < 0.01) = 0.01;
-        prefFRs(prefFRs>100) = 100;
+        prefFRs(prefFRs > 100) = 100;
         th = homPlast(th, 1000.* estFR, prefFRs, lambda);
         eta = eta + dt * (eta_f-eta) * eta_decay;
+        
+        
     else
         prefFRs = estFR * 1000;
         prefFRs(prefFRs < 0.01) = 0.01;
         prefFRs(prefFRs>100) = 100;
-        
+        if time == onsetTime
+            orig = fitdist(log(prefFRs), 'kernel');
+        end
     end
     
     if (mod(uint32(time/dt), uint32(1000/dt))==0)
@@ -122,6 +166,8 @@ for time = 0:dt:time_f
     
     
 end
+
+close(vid);
 
 
 

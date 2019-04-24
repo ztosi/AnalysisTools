@@ -1,0 +1,21 @@
+N = 213;
+b = 0.3;
+divKernF = @(x,b) 2./(b*b) .* x .* exp(-((x)./(b)).^2);
+inEfs = log(estFRs(adjMat(:,N)));
+dom = -3:0.01:4;
+dicEfs = dom;
+inEfInd = ceil(inEfs ./ 0.01) .* 0.01;
+bh = histcounts(inEfInd, [dom dom(end)]+0.005, 'Normalization', 'count');
+figure; hold on;
+%histogram(inEfInd, [dom dom(end)]+0.005, 'Normalization', 'count');
+plot([dom(1) dom(end)], [ 0 0], '-k', 'LineWidth', 2);
+plot([inEfs, inEfs]', 0.1 * [zeros(1, length(inEfs)); ones(1, length(inEfs))], 'k');
+mnF = mean(inEfs);
+plot([mnF, mnF], [-.3 .5], '--k', 'LineWidth', 3);
+plot(dom, conv(bh, divKernF(-1.5:0.01:1.5, .3), 'same' )./inD(N));
+plot(dom, conv(bh, pdf('norm', -1.5:0.01:1.5, 0, .3)./inD(N), 'same'));
+der = (conv(bh, (divKernF(-1.5:0.01:1.5, .3)),  'same')...
+    +  (inD(N)./10) .* (2./(1+exp(dom - mnF)) - 1))./inD(N);
+plot(dom, der, 'LineWidth', 3);
+pt = (divKernF(log(prefFRs(N)), .3) + (inD(N)./10) .* (2./(1+exp(log(prefFRs(N)) - mnF)) - 1))./inD(N);
+scatter(
