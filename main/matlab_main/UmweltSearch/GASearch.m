@@ -31,7 +31,7 @@ algorithm = 'MLP';
 useGPU = false;
 verbose = 2;
 showFig = 1;
-tinyBias = 0.001;
+tinyBias = 0.005;
 
 for ii=1:2:length(varargin)
     switch varargin{ii}
@@ -113,7 +113,7 @@ for ii=1:numGenerations
                 %classificationLayer];
                 options = trainingOptions('adam', 'ExecutionEnvironment', ...
                     'gpu', 'Verbose', 0, 'MaxEpochs', 30, 'Shuffle', 'every-epoch',...
-                    'InitialLearnRate', 5E-3, 'MiniBatchSize', noSamples);
+                    'InitialLearnRate', 5E-3, 'MiniBatchSize', noSamples/2);
                 
                 net = trainNetwork( ...
                     trainDatLoc(:,:,:, 1:end-int32(noSamples/10)), ...
@@ -155,9 +155,11 @@ for ii=1:numGenerations
                     size(trainDatLoc,2), size(trainDatLoc,4));
             end    
             st = sum(trainDatLoc);
+            perZero = sum(st==0)/length(st);
             st = find(st == 0);
             spo = sum(outputs(st))/length(st);
-            disp(['Agent: ', num2str(jj), ' MSE: ', num2str(mseLoc), ' SpontAct %: ', num2str(100*spo)]);
+            disp(['Agent: ', num2str(jj), ' MSE: ', num2str(mseLoc),...
+                'Zero%', num2str(perZero), ' Spont% : ', num2str(100*spo)]);
         end
         toc;
     end
@@ -177,8 +179,8 @@ for ii=1:numGenerations
         clf;
         subplot(2, 3, [1 4]);
         hold on;
-        title('Selected Inputs for top agents');
-        imagesc(flipud(slcts));
+        title(['Gen: ', num2str(ii), ' Elite Agent Inputs']);
+        imagesc(slcts);
         xlim([0.5 numSurvivors+.5]);
         ylim([0.5 N+.5]);
         hold off;
