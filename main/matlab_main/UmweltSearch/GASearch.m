@@ -135,12 +135,12 @@ for ii=1:numGenerations
             
         else
             trainDatLoc = input4SelectAndType(inps, t_back, trainingDataFull, 'vector');
-            net = lscov(trainDatLoc(:, 1:end-int32(noSamples/10))', outputLoc(1:end-int32(noSamples/10))');
+            net = lscov(trainDatLoc(:, 1:end-int32(noSamples/10))', outputLoc(1:end-int32(noSamples/10)));
             y = trainDatLoc(:, (end-int32(noSamples/10)+1):end)*net;
             mseLoc = mean((y-outputs((end-int32(noSamples/10)+1):end)').^2);
             mses(jj) = mseLoc;
             fitness(jj) = mseLoc + (sum(inps)/N) * tinyBias;
-            agents(jj) = net;
+            agents{jj} = net;
         end
         if isempty(best{1}) || best{1} > mseLoc
             best{1} = mseLoc;
