@@ -1,4 +1,4 @@
-function [nn, selection, mse, trainingData, trOut, rast] = GASearch(neuNo, N, asdf, varargin)
+function [nn, selection, perCorrect, trainingData, trOut, rast] = GASearch(neuNo, N, asdf, varargin)
 %%
 % Searches for the optimal set of neurons in the network to use to predict
 % whether or not a given neuron "neuNo" will fire.
@@ -25,13 +25,14 @@ agentGenes(N+1,:) = randi([mnHid mxHid], 1, numAgents); % 10-100 hidden units
 agentGenes(N+2,:) = randi([mnTB mxTB], 1, numAgents); % looking back between 5 and 20 time steps
 agents = cell(numAgents,1);
 fitness = ones(numAgents,1);
-mses = zeros(numAgents,1);
+accuracy = zeros(numAgents,1);
 best = cell(3,1);
 algorithm = 'MLP';
 useGPU = false;
 verbose = 2;
 showFig = 1;
-tinyBias = 0.005;
+tinyBias = 0.1;
+dsN = '';
 
 for ii=1:2:length(varargin)
     switch varargin{ii}
@@ -61,6 +62,8 @@ for ii=1:2:length(varargin)
             showFig = varargin{ii+1};
         case 'SmallNetBias'
             tinyBias = varargin{ii+1};
+        case 'DataSetName'
+            dsN = varargin{ii+1};
         otherwise
             error('Unknown input.');
     end
@@ -78,13 +81,20 @@ if showFig
     figure('position',[0, 0, 1200, 800]);
 end
 
+outCat = zeros(noSamples,2,'single');
+for ll=1:noSamples
+   ind = outputs(ll)+1;
+   outCat(ll,ind) = 1;
+end
+
 for ii=1:numGenerations
     if verbose >= 1
         disp(['GENERATION ' num2str(ii)]);
     end
     for jj=1:numAgents
         tic;
-        
+        ce = 0; % cross entropy
+        acc = 0; % accuracy
         if(sum(agentGenes(1:N,jj)) == 0) % accidentally evolved an agent w/ no genes
             agentGenes(randperm(N, 10),jj) = 1;
         end
@@ -93,11 +103,12 @@ for ii=1:numGenerations
         noHid = agentGenes(N+1, jj);
         inps = agentGenes(1:N, jj)==1;
         
-        outputLoc = single(outputs');
+        
         
         if strcmp(algorithm, 'MLP') %Use a multi-layer perceptron classifier
-            
+            outputLoc = single(outputs');
             if useGPU
+                outputLoc = categorical(outputLoc);
                 trainDatLoc = input4SelectAndType(inps, t_back, trainingDataFull, 'image');
                 %plorp = [size(trainDatLoc,1), size(trainDatLoc,2), 1];
                 %if ((size(plorp,2)<2) || (size(plorp,2)>3) || (nnz(plorp)<3))
@@ -107,10 +118,10 @@ for ii=1:numGenerations
                     imageInputLayer([size(trainDatLoc,1), size(trainDatLoc,2), 1]), ...
                     fullyConnectedLayer(noHid),...
                     tanhLayer,...
-                    fullyConnectedLayer(1),...
-                    regressionLayer];
-                %softmaxLayer, ...
-                %classificationLayer];
+                    fullyConnectedLayer(2),...
+                    softmaxLayer, ...
+                    classificationLayer];
+                                   % regressionLayer];
                 options = trainingOptions('adam', 'ExecutionEnvironment', ...
                     'gpu', 'Verbose', 0, 'MaxEpochs', 30, 'Shuffle', 'every-epoch',...
                     'InitialLearnRate', 5E-3, 'MiniBatchSize', noSamples/2);
@@ -122,31 +133,47 @@ for ii=1:numGenerations
             else
                 trainDatLoc = input4SelectAndType(inps, t_back, trainingDataFull, 'vector');
                 net = train(net, trainDatLoc(:, 1:end-int32(noSamples/10)), ...
-                    outputLoc(1:end-int32(noSamples/10)), 'UseParallel', 'yes', 'Reduction', 1);
+                    outCat(1:end-int32(noSamples/10)), 'UseParallel', 'yes', 'Reduction', 1);
                 
             end
             
             % Get a test MSE
             y =  predict(net,trainDatLoc(:,:,1,(noSamples-int32(noSamples/10)+1):noSamples));
-            mseLoc = mean(((single(y)')-outputs((end-int32(noSamples/10)+1):end)).^2);
-            mses(jj) = mseLoc;
-            fitness(jj) = mses(jj) + (sum(inps)/N) * tinyBias;
+            testOut = outputs((end-int32(noSamples/10)+1):end)+1;
+            for kk=1:length(testOut)
+               ce = ce - log(y(kk,testOut(kk)));
+               [~,sl] = max(y(kk,:));
+               acc = acc + (sl == testOut(kk));
+            end
+            acc = acc / length(testOut);
+            %mseLoc = mean(((single(y)')-outputs((end-int32(noSamples/10)+1):end)).^2);
+            accuracy(jj) = acc;%mseLoc;
+            fitness(jj) = ce * (1+(tinyBias*(sum(inps)/N)));%mses(jj) + (sum(inps)/N) * tinyBias;
             agents{jj} = net;
             
         else
+            outputLoc = outCat;
             trainDatLoc = input4SelectAndType(inps, t_back, trainingDataFull, 'vector');
-            net = lscov(trainDatLoc(:, 1:end-int32(noSamples/10))', outputLoc(1:end-int32(noSamples/10)));
-            y = trainDatLoc(:, (end-int32(noSamples/10)+1):end)*net;
-            mseLoc = mean((y-outputs((end-int32(noSamples/10)+1):end)').^2);
-            mses(jj) = mseLoc;
-            fitness(jj) = mseLoc + (sum(inps)/N) * tinyBias;
+            net = lscov(trainDatLoc(:, 1:end-int32(noSamples/10))', outputLoc(1:end-int32(noSamples/10), :));
+            y = trainDatLoc(:, (end-int32(noSamples/10)+1):end)'*net;
+            y = exp(y)./sum(exp(y),2); % softmax
+            testOut = outputs((end-int32(noSamples/10)+1):end)+1;
+            for kk=1:length(testOut)
+               ce = ce - log(y(kk,testOut(kk)));
+               [~,sl] = max(y(kk,:));
+               acc = acc + (sl == testOut(kk));
+            end
+            acc = acc / length(testOut);
+            %mseLoc = mean((y-outputs((end-int32(noSamples/10)+1):end)').^2);
+            accuracy(jj) = acc;%mseLoc;
+            fitness(jj) = ce * (1+(tinyBias*(sum(inps)/N)));%mseLoc + (sum(inps)/N) * tinyBias;
             agents{jj} = net;
         end
-        if isempty(best{1}) || best{1} > mseLoc
-            best{1} = mseLoc;
+        if isempty(best{1}) || best{1} > acc
+            best{1} = acc;
             best{2} = agentGenes(:, jj);
             best{3} = net;
-            save(['Neu',num2str(neuNo),'_02-0_umweltSelect.mat'], 'best', 'trainDatLoc', 'outputs');
+            save(['Neu',num2str(neuNo),'_', dsN,'umweltSelect.mat'], 'best', 'trainDatLoc', 'outputs', 'ce', 'acc');
         end
         if verbose == 2
             trainDatLoc(trainDatLoc<0) = 0;
@@ -158,8 +185,10 @@ for ii=1:numGenerations
             perZero = sum(st==0)/length(st);
             st = find(st == 0);
             spo = sum(outputs(st))/length(st);
-            disp(['Agent: ', num2str(jj), ' MSE: ', num2str(mseLoc),...
-                'Zero%', num2str(perZero), ' Spont% : ', num2str(100*spo)]);
+            disp(['Agent: ', num2str(jj), '  Fitness: ', num2str(fitness(jj)),...
+                '  Accuracy: ', num2str(acc*100),'%', ...
+                '  Zero%: ', num2str(100*perZero), ...
+                '  Spont%: ', num2str(100*spo)]);
         end
         toc;
     end
@@ -186,8 +215,8 @@ for ii=1:numGenerations
         hold off;
         subplot(2,3,3);
         hold on;
-        title('MSEs');
-        histogram(mses(I(1:numSurvivors)));
+        title('Accuracy');
+        histogram(accuracy(I(1:numSurvivors)));
         hold off;
         subplot(2,3, [2 5]);
         hold on;
@@ -214,7 +243,7 @@ for ii=1:numGenerations
     end
     
     if verbose >= 1
-        disp(['Best MSE: ', num2str(min(mses))]);
+        disp(['Best Accuracy: ', num2str(max(accuracy))]);
         disp(['Best Fitness: ', num2str(min(fitness))]);
         [~,miFit] = min(fitness);
         disp(['Hidden Units: ', num2str(agentGenes(N+1, miFit))]);
@@ -226,8 +255,8 @@ for ii=1:numGenerations
     
 end
 
-[~,miFit] = min(mses);
-mse = best{1};%mses(miFit);
+[~,miFit] = min(accuracy);
+perCorrect = best{1};%mses(miFit);
 selection = find(best{2}(1:N)); %find(agentGenes(1:N, miFit));
 nn = best{3};%agents{miFit};
 t_back = agentGenes(N+2,miFit);

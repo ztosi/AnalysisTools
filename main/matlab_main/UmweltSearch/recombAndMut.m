@@ -27,11 +27,11 @@ function newGenes = recombAndMut(agentGenes, elites, survivors, toDie, ...
             newChromosome(1:N) = xor((newChromosome(1:N)==1), mutation(1:N)); 
             if mutation(end-1)
                 nH = newChromosome(end-1);
-                newChromosome(end-1) = randi([max([mnHid, nH-10]), min([nH+10, mxHid])]);
+                newChromosome(end-1) = randi([max([mnHid, nH-15]), min([nH+15, mxHid])]);
             end
             if mutation(end)
             	tb = newChromosome(end);
-                newChromosome(end) = randi([max([mnTB, tb-4]), min([mxTB, tb+4])]);
+                newChromosome(end) = randi([max([mnTB, tb-5]), min([mxTB, tb+5])]);
             end
             
             newGenes(:,kk) = newChromosome;
@@ -48,10 +48,10 @@ function newGenes = recombAndMut(agentGenes, elites, survivors, toDie, ...
                 
                 % Always alter the number of hidden units and the amount of time looked back
                 nH = agentGenes(end-1, toMut);
-                newGenes(end-1, kk) = randi([max([mnHid, nH-10]), min([nH+10, mxHid])]);
+                newGenes(end-1, kk) = randi([max([mnHid, nH-15]), min([nH+15, mxHid])]);
                 
                 tB = agentGenes(end, toMut);
-                newGenes(end, kk) = randi([max([mnTB, tB-4]), min([tB+4, mxTB])]);
+                newGenes(end, kk) = randi([max([mnTB, tB-5]), min([tB+5, mxTB])]);
 
 		else % make an entirely new random agent
 				newGenes(:, kk) = randomAgent(N+2, 0.02, .75, [mnHid mxHid], [mnTB mxTB]);
