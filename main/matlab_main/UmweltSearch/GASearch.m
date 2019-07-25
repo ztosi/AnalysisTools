@@ -31,7 +31,7 @@ algorithm = 'MLP';
 useGPU = false;
 verbose = 2;
 showFig = 1;
-tinyBias = 0.1;
+tinyBias = 0.5;
 dsN = '';
 
 for ii=1:2:length(varargin)
@@ -127,19 +127,19 @@ for ii=1:numGenerations
                     'InitialLearnRate', 5E-3, 'MiniBatchSize', noSamples/2);
                 
                 net = trainNetwork( ...
-                    trainDatLoc(:,:,:, 1:end-int32(noSamples/10)), ...
-                    outputLoc(1:end-int32(noSamples/10)), layerSpec, options);
+                    trainDatLoc(:,:,:, 1:end-int32(noSamples/5)), ...
+                    outputLoc(1:end-int32(noSamples/5)), layerSpec, options);
                 
             else
                 trainDatLoc = input4SelectAndType(inps, t_back, trainingDataFull, 'vector');
-                net = train(net, trainDatLoc(:, 1:end-int32(noSamples/10)), ...
-                    outCat(1:end-int32(noSamples/10)), 'UseParallel', 'yes', 'Reduction', 1);
+                net = train(net, trainDatLoc(:, 1:end-int32(noSamples/5)), ...
+                    outCat(1:end-int32(noSamples/5)), 'UseParallel', 'yes', 'Reduction', 1);
                 
             end
             
             % Get a test MSE
-            y =  predict(net,trainDatLoc(:,:,1,(noSamples-int32(noSamples/10)+1):noSamples));
-            testOut = outputs((end-int32(noSamples/10)+1):end)+1;
+            y =  predict(net,trainDatLoc(:,:,1,(noSamples-int32(noSamples/5)+1):noSamples));
+            testOut = outputs((end-int32(noSamples/5)+1):end)+1;
             for kk=1:length(testOut)
                ce = ce - log(y(kk,testOut(kk)));
                [~,sl] = max(y(kk,:));
@@ -148,16 +148,16 @@ for ii=1:numGenerations
             acc = acc / length(testOut);
             %mseLoc = mean(((single(y)')-outputs((end-int32(noSamples/10)+1):end)).^2);
             accuracy(jj) = acc;%mseLoc;
-            fitness(jj) = ce * (1+(tinyBias*(sum(inps)/N)));%mses(jj) + (sum(inps)/N) * tinyBias;
+            fitness(jj) = ce * (1+(tinyBias*(sum(inps)/(N/2)))) + sum(inps);%mses(jj) + (sum(inps)/N) * tinyBias;
             agents{jj} = net;
             
         else
             outputLoc = outCat;
             trainDatLoc = input4SelectAndType(inps, t_back, trainingDataFull, 'vector');
-            net = lscov(trainDatLoc(:, 1:end-int32(noSamples/10))', outputLoc(1:end-int32(noSamples/10), :));
-            y = trainDatLoc(:, (end-int32(noSamples/10)+1):end)'*net;
+            net = lscov(trainDatLoc(:, 1:end-int32(noSamples/5))', outputLoc(1:end-int32(noSamples/5), :));
+            y = trainDatLoc(:, (end-int32(noSamples/5)+1):end)'*net;
             y = exp(y)./sum(exp(y),2); % softmax
-            testOut = outputs((end-int32(noSamples/10)+1):end)+1;
+            testOut = outputs((end-int32(noSamples/5)+1):end)+1;
             for kk=1:length(testOut)
                ce = ce - log(y(kk,testOut(kk)));
                [~,sl] = max(y(kk,:));
@@ -166,10 +166,10 @@ for ii=1:numGenerations
             acc = acc / length(testOut);
             %mseLoc = mean((y-outputs((end-int32(noSamples/10)+1):end)').^2);
             accuracy(jj) = acc;%mseLoc;
-            fitness(jj) = ce * (1+(tinyBias*(sum(inps)/N)));%mseLoc + (sum(inps)/N) * tinyBias;
+            fitness(jj) = ce * (1+(tinyBias*(sum(inps)/(N/2)))) + sum(inps);%mseLoc + (sum(inps)/N) * tinyBias;
             agents{jj} = net;
         end
-        if isempty(best{1}) || best{1} > acc
+        if isempty(best{1}) || best{1} < acc
             best{1} = acc;
             best{2} = agentGenes(:, jj);
             best{3} = net;
@@ -186,9 +186,9 @@ for ii=1:numGenerations
             st = find(st == 0);
             spo = sum(outputs(st))/length(st);
             disp(['Agent: ', num2str(jj), '  Fitness: ', num2str(fitness(jj)),...
-                '  Accuracy: ', num2str(acc*100),'%', ...
-                '  Zero%: ', num2str(100*perZero), ...
-                '  Spont%: ', num2str(100*spo)]);
+                '  CE: ', num2str(ce), '  Accuracy: ', num2str(acc*100), ...
+                '%  Zero Inp.: ', num2str(100*perZero), ...
+                '%  Spont: ', num2str(100*spo), '%']);
         end
         toc;
     end
@@ -229,7 +229,8 @@ for ii=1:numGenerations
         if strcmp(algorithm, 'MLP')
             hold on;
             title('Input vs Hidden Units');
-            scatter(sum(slcts), agentGenes(N+1, I(1:numSurvivors)), 30, 'filled');
+            scatter(sum(slcts), agentGenes(N+1, I(1:numSurvivors)), 30, ...
+                accuracy(I(1:numSurvivors)), 'filled');
             ylim([mnHid-1 mxHid+1]);
             unityline(gca);
             hold off;
