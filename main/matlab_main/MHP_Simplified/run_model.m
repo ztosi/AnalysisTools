@@ -1,13 +1,13 @@
 clear;
-global N N_i N_e q_e q_i tau_e tau_i rp_i rp_e v_l r_m i_bg v_r dt alpha beta lowFR noiseVar;
-f=figure
-set(f, 'Position', [100, 100, 1400, 500]);
+global N N_i N_e q_e q_i tau_e tau_i rp_i rp_e v_l r_m i_bg v_r dt mu sig rt2 noiseVar;
+figure;
+%set(f, 'Position', [100, 100, 1400, 500]);
 %set(f, 'color', [0 0 0]);
-f.PaperUnits = 'centimeters';
-f.PaperPosition = [0 0 70 70];
-vid = VideoWriter('~/SmoothMANAVid.avi', 'Motion JPEG AVI');
-open(vid);
-f.InvertHardcopy = 'off';
+%f.PaperUnits = 'centimeters';
+%f.PaperPosition = [0 0 70 70];
+%vid = VideoWriter('~/SmoothMANAVid.avi', 'Motion JPEG AVI');
+%open(vid);
+%f.InvertHardcopy = 'off';
 
 %% Main Sim constants
 N = 500;
@@ -16,10 +16,11 @@ N_e = 400;
 dt = 0.5; %ms - integration time step (euler)
 time_f = 5E5; %ms -- simulation duration
 onsetTime = 20000;
+
 %% LIF Neuron parameters and vars
 i_e = zeros(N,1);
 i_i = zeros(N,1);
-th = -50 .* ones(N,1);%mV
+th = -50;% .* ones(N,1);%mV
 lastSpk = zeros(N,1);
 i_bg = 18; % nA
 v_l = -70; %mV
@@ -34,6 +35,7 @@ q_i = 6; %ms
 r_m = 1.0; %M. ohm
 noiseVar = 0.01;
 
+
 %% Spike recording
 asdf = cell(N+2,1);
 spks_tmp = zeros(N, 10000, 'uint8');
@@ -43,31 +45,32 @@ spks = zeros(N,1);
 %% MHP and HP stuff
 ra_tau = 0.001 * dt;
 prefFRs = zeros(N,1);
-lambda = 5E-5;
-eta = 0.0001;
+eta = .01;%0.0001;
 eta_f = 0.0001;
-eta_decay = 1E-5;
-alpha = 2.5;
-lowFR = 1.5; %Hz
-beta = 30;
+eta_decay = 0.00001;
+rt2 = sqrt(2);
+sig = 0.1;
+mu = 1;
+R_e = 1.0;
+R_i = 1.0;
+xx1 = @(x) x./(x+1);
 
 %% Weight Matrices & input
 wtMn = 1;
 wtStd = 1;
 adj_mat = (rand(N) < 0.1);
 wtMat =  0.1 .* adj_mat .* abs((randn(N).*wtStd+wtMn));
-%dlyMat = adj_mat.* 
 wtE = sparse(wtMat(:, 1:N_e));
 wtI = sparse(wtMat(:, N_e+1:end));
 adj_mat = double(adj_mat)';
-adj_mat(adj_mat(:)==0) = NaN;
-inD = sum(adj_mat, 'omitnan')';
+inD = sum(adj_mat)';
 noInp = 100;
 inpMat = 2.*sparse((rand(N, noInp) < 0.2) .* (abs(randn(N, noInp).*wtStd+wtMn)));
 inpMnFR = 10;
 ef= zeros(N,1);
 estFR = ones(N,1).*0.001;
 pfRecord = zeros(N, 10000);
+
 %% Run 
 for time = 0:dt:time_f
     
@@ -89,7 +92,7 @@ for time = 0:dt:time_f
     i_i(ref) = 0;
     
     % LIF Neuron volts
-    [v_m, lastSpk, spks] = LIF(v_m, th, lastSpk, i_e, -i_i, ref, time);
+    [v_m, lastSpk, spks] = LIF(v_m, th, lastSpk, R_e.*i_e, -i_i.*R_i, ref, time);
 %     if (time > onsetTime)
         ef = ef + spks;
         tauA = 10000./sqrt(estFR.*1000);
@@ -101,7 +104,6 @@ for time = 0:dt:time_f
 %         ef = estFR;
 %     end
 
-    
     % Cache spikes
     spks_tmp(:, spkInd) = spks;
     spkInd = spkInd+1;
@@ -114,8 +116,7 @@ for time = 0:dt:time_f
     end
     
     if (time > onsetTime)
-        if mod(time,200) == 0
-            subplot(122);
+        if mod(time,500) == 0
             cla;
             hold on;
             title('Target Firing Rate Distribution');
@@ -131,25 +132,24 @@ for time = 0:dt:time_f
             xlim([-3 5]);
             ylim([0 .6]);
             xlabel('Ln(firing rates)');
+            drawnow;
             hold off;
         end
-        prefFRs = metaHP(adj_mat, inD, prefFRs, 1000 .* estFR, eta, time);
-        if mod(time,200) == 0
-            writeVideo(vid,getframe(gcf));
-            cla;
-        end
- 
+            
+%         if mod(time,200) == 0
+%             writeVideo(vid,getframe(gcf));
+%             cla;
+%         end
         
+        prefFRs = metaHP(adj_mat, 1000 .* estFR, eta);
         if (uint32(mod(time, 10))==0)
-            
             pfRecord(:, uint32((time-onsetTime)/10)+1) = prefFRs;
-            
         end
         prefFRs(prefFRs < 0.01) = 0.01;
         prefFRs(prefFRs > 100) = 100;
-        th = homPlast(th, 1000.* estFR, prefFRs, lambda);
+        R_e = R_e + 0.001.*(prefFRs - (1000.*estFR)).*xx1(R_e);
+        R_i = R_i + 0.001.*((1000.*estFR)-prefFRs).*xx1(R_i);
         eta = eta + dt * (eta_f-eta) * eta_decay;
-        
         
     else
         prefFRs = estFR * 1000;
@@ -162,12 +162,13 @@ for time = 0:dt:time_f
     
     if (mod(uint32(time/dt), uint32(1000/dt))==0)
         disp(time);
+        disp(eta);
     end
     
     
 end
 
-close(vid);
+% close(vid);
 
 
 
